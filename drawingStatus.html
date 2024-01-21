@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing Status</title>
+    <style>
+        .wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div id="A-assembly">
+            <p>A-Assembly</p>
+        </div>
+        <div id="B-assembly">
+            <p>B-Assembly</p>
+        </div>
+        <div id="C-assembly">
+            <p>C-Assembly</p>
+        </div>
+        <div id="D-assembly">
+            <p>D-Assembly</p>
+        </div>
+    </div>
+    <script type="module">
+
+        import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/+esm";
+        import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+
+
+        async function drawingplot(){
+            let data = await d3.json('drawings.json');
+
+            let assyLetters = ['A','B','C','D']
+
+            let assyOb = {}
+
+            // Create Counts for Each Assembly
+
+            function pickAssembly(firstletter,fn){
+                return firstletter == fn[0] ? true : false ;
+            }
+
+            function filterIssue(value){
+                return value == 1 ? true : false;
+            }
+
+            assyLetters.forEach(d => {
+                let tempob = {}
+                let templist = data.filter( d1 => pickAssembly(d,d1.FN))
+                tempob['totalCount'] = templist.length;
+                tempob['issuecount'] = [];
+                //Calculate Number of P-Issue
+                let pissuecount =  templist.filter( d2 =>filterIssue(d2['P-Issue'])).length;
+                tempob['issuecount'].push({'issue':'P','count':pissuecount});
+                //Calculate Number of M-Issue
+                let missuecount=  templist.filter( d2 =>filterIssue(d2['M-Issue'])).length;
+                tempob['issuecount'].push({'issue':'M','count':missuecount})
+                //Calculate Number of F-Issue
+                let fissuecount = templist.filter( d2 =>filterIssue(d2['F-Issue'])).length;
+                tempob['issuecount'].push({'issue':'F','count':fissuecount})
+                console.log(tempob)
+
+                let plot = Plot.plot({
+                    x: {domain: ['P','M','F']},
+                    y:{domain:[0,30]},
+                   marks: [
+                       Plot.barY(tempob['issuecount'],{x:'issue',y:'count',fill:'lightblue'}),
+                       Plot.ruleY([tempob['totalCount']], {stroke: "black"}),
+                   ]
+                })
+                let div = document.querySelector("#" + d + "-assembly");
+                div.append(plot);
+            })
+
+
+
+        }
+
+        drawingplot()
+        </script>
+
+</body>
+</html>
